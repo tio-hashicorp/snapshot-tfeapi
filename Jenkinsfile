@@ -332,6 +332,9 @@ def secrets = [
                 [envVar: 'api_token', vaultKey: 'api_token2']]
         ]
 ]
+def printToken(token) {
+       println(token.substring(1,25))
+}
 
 pipeline {
   agent any
@@ -367,8 +370,8 @@ pipeline {
                     }
                 }
                 script {
-                    echo "BEARER_TOKEN=${env.BEARER_TOKEN}"
-                    //println(${env.BEARER_TOKEN}.substring(1,10))
+                    //echo "BEARER_TOKEN=${env.BEARER_TOKEN}"
+                    printToken(env.BEARER_TOKEN)
                 }
             }
         }
