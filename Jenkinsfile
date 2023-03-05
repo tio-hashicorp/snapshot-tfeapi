@@ -549,7 +549,7 @@ def configuration = [vaultUrl: 'http://54.167.13.52:8200',
         vaultCredentialId: 'vault-token-root']
 
 def secrets = [
-        [path: 'infra/tfe', engineVersion: 1, secretValues: [
+        [path: 'secret1/innovation-lab', engineVersion: 1, secretValues: [
                 [envVar: 'api_token', vaultKey: 'api_token2']]
         ]
 ]
