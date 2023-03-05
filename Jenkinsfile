@@ -257,7 +257,7 @@ def waitForRun(runid) {
         def status = getRunStatus(runid)
         //println('waitForRun - status: ' + status)
 
-        //if ((status == 'planned') && (isConfirmable == true) && (override == "no") ) break
+        // these status means we are at final state
         if (status == 'planned') running = false
         if (status == 'applied') running = false
         if (status == "planned_and_finished") running = false
@@ -266,8 +266,7 @@ def waitForRun(runid) {
         if (status == "canceled") running = false
         if (status == "force_canceled") running = false
         if (status == "discarded") running = false
-        //if (status == 'cost_estimated') break
-
+ 
         // stop when count > 60, dont loop forever
         if (count > 60) break
         count++
@@ -338,6 +337,7 @@ pipeline {
   agent any
   parameters {
       string(name: 'ORGANIZATION', defaultValue: 'innovation-lab', description: '')
+      string(name: 'VM_NAME', description: '')
       choice(
        	name: 'VM_TYPE',
         choices: ['t2.nano', 't2.micro', 't2.small', 't2.medium']
@@ -403,6 +403,7 @@ pipeline {
                 }
                 script {
                     updateWorkspaceVar(env.TF_WORKSPACE_ID, TFE_VARS.get('vm_type'), 'vm_type', params.VM_TYPE)
+                    updateWorkspaceVar(env.TF_WORKSPACE_ID, TFE_VARS.get('vm_name'), 'vm_name', params.VM_NAME)
                 }
             }
         }
