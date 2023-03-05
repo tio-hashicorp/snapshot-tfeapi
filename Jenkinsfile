@@ -204,7 +204,7 @@ def listSentinelPolicysets (orgId) {
 
     return policy_count
 }
-
+//
 def waitForPlan(runid) {
   def status =''
   println('waitForPlan - id: ' + runid)
@@ -306,21 +306,21 @@ def waitForPolicy(runid) {
 
 def waitForRun(runid) {
     def count = 0
-    def continue = true
+    def running = true
     println('waitForRun - id: ' + runid)
-    while ( continue) {
+    while ( running) {
         def status = getRunStatus(runid)
         println('waitForRun - status: ' + status)
 
         //if ((status == 'planned') && (isConfirmable == true) && (override == "no") ) break
-        if (status == 'planned') continue = false
-        if (status == 'applied') continue = false
-        if (status == "planned_and_finished") continue = false
-        if (status == "errored") continue = false
-        if (status == "discarded") continue = false
-        if (status == "canceled") continue = false
-        if (status == "force_canceled") continue = false
-        if (status == "discarded") continue = false
+        if (status == 'planned') running = false
+        if (status == 'applied') running = false
+        if (status == "planned_and_finished") running = false
+        if (status == "errored") running = false
+        if (status == "discarded") running = false
+        if (status == "canceled") running = false
+        if (status == "force_canceled") running = false
+        if (status == "discarded") running = false
         //if (status == 'cost_estimated') break
 
         // If a policy requires an override, prompt in the pipeline
