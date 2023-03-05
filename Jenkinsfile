@@ -368,7 +368,7 @@ pipeline {
                 }
                 script {
                     echo "BEARER_TOKEN=${env.BEARER_TOKEN}"
-                    println(${env.BEARER_TOKEN}.substring(1,10))
+                    //println(${env.BEARER_TOKEN}.substring(1,10))
                 }
             }
         }
