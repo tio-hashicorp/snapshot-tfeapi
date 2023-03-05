@@ -13,11 +13,10 @@ def getWorkspaceId(organization, workspace_name) {
 
     def data = new JsonSlurper().parseText(response.content)
     if (!data.data.id) {
-        println 'cannot find workspace'
-        exit 0
+        // cannot find workspace
+        return 0
     } else {
-        println 'found workspace'
-        println ('Workspace Id: ' + data.data.id)
+        //println ('Workspace Id: ' + data.data.id)
         return data.data.id
     }
 }
@@ -179,6 +178,7 @@ def listLiveRun(workspaceid) {
     return live_runs
 }
 
+
 def listSentinelPolicysets (orgId) {
     def response = httpRequest(ignoreSslErrors: true,
         customHeaders: [
@@ -211,13 +211,14 @@ def discardRun(runid) {
         url: "https://${TFHOST}/api/v2/runs/${runid}/actions/discard"
     )
 
-    println response
-    //println ("Run id: " + data.data.id)
-    //println ("Run status" + data.data.attributes.status)
-
-    //def data = new JsonSlurper().parseText(response.content)
-    //result = data.data.attributes.status
-    //return result
+    def data = new JsonSlurper().parseText(response.content)
+    /*
+    println ("Run id: " + data.data.id)
+    println ("Run status" + data.data.attributes.status)
+    */
+    result = data.data.attributes.status
+    return result
+    
 }
 
 def getPlanResults(runid) {
@@ -233,26 +234,20 @@ def getPlanResults(runid) {
 }
 
 
-def waitForPolicy(runid) {
-  def status =''
-  status = getRunStatus(runid)
-  println('waitForPolicy- id: ' + runid)
-  printlin('status ' + status)
+def getRunStatus(runId) {
+  def result = ''
+  def status = ''
 
-  while (status == "policy_checking") {
-    status = getRunStatus(runid)
-    println('Status: ' + status)
-    switch (status) {
-        case 'policy_checked':
-          return 0
-        case 'policy_override':
-          return 0
-        case 'policy_soft_failed':
-          return 0
-    }
-    sleep(5)
-  }
+  def response = httpRequest(ignoreSslErrors: true,
+        customHeaders: [[ name: 'Authorization', value: 'Bearer ' + env.BEARER_TOKEN ]],
+        url: "https://${TFHOST}/api/v2/runs/${runId}"
+    )
+  def data = new JsonSlurper().parseText(response.content)
+  status = data.data.attributes.status
+  println ('getRunStatus - status:' + status)
+  return status
 }
+
 
 def waitForRun(runid) {
     def count = 0
@@ -260,7 +255,7 @@ def waitForRun(runid) {
     println('waitForRun - id: ' + runid)
     while (running) {
         def status = getRunStatus(runid)
-        println('waitForRun - status: ' + status)
+        //println('waitForRun - status: ' + status)
 
         //if ((status == 'planned') && (isConfirmable == true) && (override == "no") ) break
         if (status == 'planned') running = false
@@ -277,22 +272,9 @@ def waitForRun(runid) {
         if (count > 60) break
         count++
         sleep(5)
-    } //while continue
+    } //while 
 }
 
-def getRunStatus(runId) {
-  def result = ''
-  def status = ''
-
-  def response = httpRequest(ignoreSslErrors: true,
-        customHeaders: [[ name: 'Authorization', value: 'Bearer ' + env.BEARER_TOKEN ]],
-        url: "https://${TFHOST}/api/v2/runs/${runId}"
-    )
-  def data = new JsonSlurper().parseText(response.content)
-  status = data.data.attributes.status
-  println ('getRunStatus - status:' + status)
-  return status
-}
 
 def isAutoApply(runid) {
     def result = ''
@@ -386,6 +368,7 @@ pipeline {
                 }
                 script {
                     echo "BEARER_TOKEN=${env.BEARER_TOKEN}"
+                    println(${env.BEARER_TOKEN}.substring(1,10))
                 }
             }
         }
@@ -414,15 +397,10 @@ pipeline {
 
         stage('Modify Workspace Parameters') {
             steps {
-		        script {
-                    env.TF_WORKSPACE_ID =  getWorkspaceId(env.TF_ORG_NAME, env.TF_WORKSPACE_NAME)
-                }
-
                 script {
                     TFE_VARS = getWorkspaceVars(env.TF_WORKSPACE_ID, ['vm_type'])
                     println TFE_VARS
                 }
-
                 script {
                     updateWorkspaceVar(env.TF_WORKSPACE_ID, TFE_VARS.get('vm_type'), 'vm_type', params.VM_TYPE)
                 }
