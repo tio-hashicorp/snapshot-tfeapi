@@ -194,30 +194,6 @@ def listSentinelPolicysets (orgId) {
 
     return policy_count
 }
-//
-def waitForPlan(runid) {
-  def status =''
-  println('waitForPlan - id: ' + runid)
-  while (status!="errored") {
-    status = getRunStatus(runid)
-    println('Status: ' + status)
-    // // If a policy requires an override, prompt in the pipeline
-    // if (status == 'finished') {
-    //   def getPlanResults = getPlanResults(runid)
-    //   return getPlanResults
-    // }
-    switch (status) {
-        case 'finished':
-          def getPlanResults = getPlanResults(runid)
-          return getPlanResults
-        case 'errored':
-          println "Plan failed"
-          return 0
-    }
-
-    sleep(5)
-  }
-}
 
 
 def discardRun(runid) {
@@ -243,22 +219,6 @@ def discardRun(runid) {
     //result = data.data.attributes.status
     //return result
 }
-
-/* 
-def getPlanStatus(runid) {
-    def result = ''
-
-    def response = httpRequest(ignoreSslErrors: true,
-        customHeaders: [[ name: 'Authorization', value: 'Bearer ' + env.BEARER_TOKEN ]],
-        url: "https://${TFHOST}/api/v2/runs/${runid}/plan"
-    )
-    def data = new JsonSlurper().parseText(response.content)
-    result = data.data.attributes.status
-    return result
-}
-*/
-
-
 
 def getPlanResults(runid) {
     def result = ''
@@ -298,7 +258,7 @@ def waitForRun(runid) {
     def count = 0
     def running = true
     println('waitForRun - id: ' + runid)
-    while ( running) {
+    while (running) {
         def status = getRunStatus(runid)
         println('waitForRun - status: ' + status)
 
@@ -313,70 +273,7 @@ def waitForRun(runid) {
         if (status == "discarded") running = false
         //if (status == 'cost_estimated') break
 
-        // If a policy requires an override, prompt in the pipeline
-        /*
-        if (status.startsWith('approve_policy')) {
-            def override
-            try {
-                override = input (message: 'Override policy?', 
-                    ok: 'Continue', 
-                    parameters: [ booleanParam( 
-                        defaultValue: false, 
-                        description: 'A policy restriction is enforced.Check the box to approve overriding the policy.',
-                                      name: 'Override')
-                                 ])
-            } catch (err) {
-                override = false
-            }
-
-            // If we're overriding, tell terraform. Otherwise, discard the run
-            if (override == true) {
-                println('Overriding!')
-                def item = status.split(':')[1]
-                println ('item is ' + item)
-                def overridden = overridePolicy(item)
-                if (!overridden) {
-                    println('Could not override the policy')
-                    discardRun(runid)
-                    error('Could not override the Sentinel policy')
-                    break
-                } 
-            } else {
-                println('Rejecting!')
-                discardRun(runid)
-                error('The pipeline failed due to a Sentinel policy restriction.')
-                break
-            }
-        }
-        */
-
-        /*
-        // If we're ready to apply, prompt in the pipeline to do so
-        if (status == 'apply_plan') {
-            def apply
-            try {
-                apply = input (message: 'Confirm Apply', ok: 'Continue', 
-                    parameters: [booleanParam(defaultValue: false, 
-                    description: 'Would you like to continue to apply this run?', name: 'Apply')]) 
-            } catch (err) { 
-                apply = false 
-            }
-
-            // If we're going to apply, tell Terraform. Otherwise, discard the run
-            if (apply == true) {
-                println('Applying plan')
-                applyRun(runid)
-                break
-            }
-            else {
-                println('Rejecting!')
-                discardRun(runid)
-                error('The pipeline failed due to a manual rejection of the plan.')
-                break
-            }
-        }
-        */
-
+        // stop when count > 60, dont loop forever
         if (count > 60) break
         count++
         sleep(5)
@@ -394,44 +291,7 @@ def getRunStatus(runId) {
   def data = new JsonSlurper().parseText(response.content)
   status = data.data.attributes.status
   println ('getRunStatus - status:' + status)
-  /*
-  switch (status) {
-      case 'pending':
-      case 'plan_queued':
-      	result = 'pending'
-      	break
-      case 'planning':
-      	result = 'planning'
-      	break
-      case 'planned':
-      case 'planned_and_finished':
-      	result = 'planned'
-      	break
-      case 'cost_estimating':
-        result = "costing"
-        break
-      case 'cost_estimated':
-      	result = 'cost_estimated'
-      	break
-      case 'policy_checking':
-      	result = 'policy'
-      	break
-      case 'policy_override':
-      	println(response.content)
-      	result = 'approve_policy:' + data.data.relationships['policy-checks'].data[0].id
-      	break
-      case 'applied':
-      	result = 'applied'
-      	break
-      case 'policy_checked':
-      	result = 'apply_plan'
-      	break
-      default:
-       	result = 'running'
-      	break
-  }
-  */
-  return result
+  return status
 }
 
 def isAutoApply(runid) {
@@ -448,68 +308,6 @@ def isAutoApply(runid) {
         return false
     return true
 }
-
-/*
-def waitForApply(runid) {
-    def count = 0
-    def status = getRunStatus(runid)
-    def autoApply = isAutoApply(runid)
-    println('waitForApply - id: ' + runid)
-    println('waitForApply - status:' + status)
-    println('waitForApply - autoApply:' + autoApply)
-    if ((status == 'cost_estimated' || status == 'policy_checked') && !autoApply) {
-        def payload = """
-        {
-            "comment": "automatically applied from Jenkins" 
-
-        }
-        """
-        println "waitForApply - Apply from Jenkins"
-        def response = httpRequest(ignoreSslErrors: true,
-            customHeaders: [
-                [ name: "Authorization", value: "Bearer " + env.BEARER_TOKEN ],
-                [ name: "Content-Type", value: "application/vnd.api+json" ]
-            ],
-            httpMode: 'POST',
-            requestBody: "${payload}",
-            url: "https://${env.TFHOST}/api/v2/runs/${runid}/actions/apply"
-        )
-        def data = new JsonSlurper().parseText(response.content)
-
-        println ("Run id: " + data.data.id)
-        println ("Run status" + data.data.attributes.status)
-
-    }
-    while (true) {
-        status = getRunStatus(runid)
-        println('waitForApply-Status: ' + status)
-
-        if (status == 'discarded') {
-            println('This run has been discarded')
-            error('The Terraform run has been discarded, and the pipeline cannot continue.')
-            break
-        }
-        if (status == 'canceled') {
-            println('This run has been canceled outside the pipeline')
-            error('The Terraform run has been canceled outside the pipeline, and the pipeline cannot continue.')
-            break
-        }
-        if (status == 'errored') {
-            println('This run has encountered an error while applying')
-            error('The Terraform run has encountered an error while applying, and the pipeline cannot continue.')
-            break
-        }
-        if (status == 'applied') {
-            println('This run has finished applying')
-            break
-        }
-
-        if (count > 60) break
-        count++
-        sleep(5)
-    }
-}
-*/
 
 
 def overridePolicy(policyid) {
@@ -645,31 +443,6 @@ pipeline {
                 }
             }
         }
-/*
-        stage('Workspace-PlanStage') {
-            steps {
-                script {
-                    waitForPlan(PLAN_ID)
-                }
-            }
-        }
-        
-        stage('Workspace-PolicyStage') {
-            steps {
-                script {
-                    //waitForRun(PLAN_ID)
-                    waitForPolicy(PLAN_ID)
-                }
-            }
-        }
 
-        stage('Workspace-ApplyStage') {
-            steps {
-                script {
-                    waitForApply(PLAN_ID)
-                }
-            }
-        }
-*/
     } //stage
 } //pipeline
