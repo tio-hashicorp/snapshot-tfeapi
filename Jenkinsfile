@@ -99,23 +99,13 @@ def createConfigurationVersion(workspace_id) {
     def data = new JsonSlurper().parseText(response.content)
     upload_url = data.data.attributes['upload-url']
     println ("upload url" + upload_url)
-    cv-id = data.data.id
-    println ("configuration-version id" + cv-id)
+    cv_id = data.data.id
+    println ("configuration-version id" + cv_id)
     return upload_url
 /*
     # Upload configuration
-echo ""
 echo "Uploading configuration version using ${config_dir}.tar.gz"
 curl -s --header "Content-Type: application/octet-stream" --request PUT --data-binary @${config_dir}.tar.gz "$upload_url"
-
-    def response = httpRequest(ignoreSslErrors: true,
-        customHeaders: [
-                [ name: 'Content-Type', value: 'application/octet-stream' ]
-            ],
-        httpMode: 'PUT',
-        requestBody: "${payload}",
-        url: "${upload_url}'
-    )
 */
 
 }
