@@ -398,6 +398,9 @@ pipeline {
         stage('Modify Workspace Parameters') {
             steps {
                 script {
+                    env.TF_WORKSPACE_ID =  getWorkspaceId(env.TF_ORG_NAME, env.TF_WORKSPACE_NAME)
+                }
+                script {
                     TFE_VARS = getWorkspaceVars(env.TF_WORKSPACE_ID, ['vm_type'])
                     println TFE_VARS
                 }
