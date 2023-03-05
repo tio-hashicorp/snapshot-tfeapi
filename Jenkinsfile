@@ -545,12 +545,12 @@ def applyRun(runid) {
 }
 
 // for Vault
-def configuration = [vaultUrl: 'http://{VAULT_HOST}:8200',
+def configuration = [vaultUrl: 'http://54.167.13.52:8200',
         vaultCredentialId: 'vault-token-root']
 
 def secrets = [
         [path: 'infra/tfe', engineVersion: 1, secretValues: [
-                [envVar: 'api_token', vaultKey: 'api_token']]
+                [envVar: 'api_token', vaultKey: 'api_token2']]
         ]
 ]
 
