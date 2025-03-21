@@ -1,13 +1,13 @@
 # snapshot-tfeapi
-<img src="pipeline.png" width=600> 
+<img src="pipeline.png" width=1000> 
 Terraform (especially via Terraform Cloud or Terraform Enterprise) provides a rich HTTP API that allows you to orchestrate and automate infrastructure provisioning as part of your broader application or platform workflows.
 
 Instead of relying solely on the terraform CLI, you can use the Terraform API to programmatically:  
- 	1.	**Create and Manage Workspaces**  
+1. **Create and Manage Workspaces**  
 	•	Automate the setup of Terraform environments per project or team  
-	•	Useful for multi-tenant SaaS platforms or internal dev portals   
- 
-	2.	**Trigger Runs** 
+	•	Useful for multi-tenant SaaS platforms or internal dev portals
+
+ 2. **Trigger Runs**   
 	•	Start plan and apply operations via API  
 	•	Triggered from a CI/CD pipeline, event hook, or custom UI  
 
